@@ -98,6 +98,11 @@ main.has-summary {
 
 .form-group {
   margin-bottom: 1.5rem;
+  position: relative;
+}
+
+.form-group:has(input[type="date"]) {
+  z-index: 5;
 }
 
 .form-row {
@@ -856,6 +861,7 @@ main.has-summary {
   position: relative;
   text-align: left;
   padding-right: 3rem;
+  z-index: 10;
 }
 
 .form-group input[type="date"]::-webkit-calendar-picker-indicator {
