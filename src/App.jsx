@@ -675,7 +675,7 @@ Based on your ${workSchedule}, ${workStartTime.replace(':', ':')} - ${workEndTim
                             }
                           }))}
                         />
-                        {day.charAt(0).toUpperCase() + day.slice(1)}
+{day === 'tuesday' ? 'Tue' : day === 'wednesday' ? 'Wed' : day === 'thursday' ? 'Thu' : day === 'saturday' ? 'Sat' : day === 'sunday' ? 'Sun' : day.charAt(0).toUpperCase() + day.slice(1, 3)}
                       </label>
                     ))}
                   </div>
