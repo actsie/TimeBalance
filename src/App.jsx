@@ -967,12 +967,11 @@ Based on your ${workSchedule}, ${workStartTime.replace(':', ':')} - ${workEndTim
         </div>
       )}
 
-      <header>
-        <h1>Freelance Time & Payment Tracker</h1>
-      </header>
-      
       <main className={(startDate || totalHours || hourlyRate) ? 'has-summary' : ''}>
         <form className="tracker-form">
+          <header>
+            <h1>Freelance Time & Payment Tracker</h1>
+          </header>
           <div className="form-group">
             <label htmlFor="startDate">Start Date</label>
             <input
