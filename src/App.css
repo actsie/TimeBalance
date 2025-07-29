@@ -501,9 +501,18 @@ main.has-summary {
   font-size: 0.95rem;
   border: 1px solid rgba(102, 126, 234, 0.3);
   border-radius: 6px;
-  background: rgba(255, 255, 255, 0.8);
+  background: white;
   color: var(--gray-900);
   box-sizing: border-box;
+}
+
+.break-item-precise input[type="time"] {
+  color-scheme: light;
+}
+
+.break-item-precise input[type="time"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.5);
+  cursor: pointer;
 }
 
 .break-item-precise input[type="text"]::placeholder {
