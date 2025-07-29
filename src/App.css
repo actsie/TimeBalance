@@ -758,9 +758,9 @@ main.has-summary {
 .work-checkbox input[type="checkbox"] {
   width: 20px;
   height: 20px;
-  accent-color: #27ae60;
+  accent-color: var(--primary-600);
   background: rgba(255, 255, 255, 0.9);
-  border: 2px solid rgba(39, 174, 96, 0.3);
+  border: 2px solid var(--gray-300);
   border-radius: 3px;
 }
 
@@ -868,9 +868,8 @@ main.has-summary {
   padding: 2.5rem;
   border-radius: 20px;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  border-left: 6px solid var(--success-600);
   border: 1px solid var(--gray-200);
-  border-left: 6px solid var(--success-600);
+  border-left: 6px solid var(--primary-600);
   transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
   transform: translateX(20px);
   opacity: 0;
