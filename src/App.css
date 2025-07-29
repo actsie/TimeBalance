@@ -64,7 +64,6 @@ main.has-summary {
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
   transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-  max-width: 500px;
   width: 100%;
 }
 
@@ -943,6 +942,7 @@ main.has-summary {
 @media (max-width: 767px) {
   .app {
     padding: 1rem;
+    max-width: 100%;
   }
   
   header h1 {
@@ -951,11 +951,20 @@ main.has-summary {
   
   .tracker-form, .summary {
     padding: 1.5rem;
+    max-width: 100%;
+    width: 100%;
+  }
+  
+  main {
+    width: 100%;
+    max-width: 100%;
   }
   
   .form-group input {
     padding: 0.75rem;
     font-size: 16px; /* Prevents zoom on iOS */
+    width: 100%;
+    box-sizing: border-box;
   }
   
   .form-group input[type="date"] {

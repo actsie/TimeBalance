@@ -1,5 +1,29 @@
-import { useState } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import './App.css'
+
+// Constants for default schedule values
+const DEFAULT_WORK_HOURS = { startTime: '09:30', endTime: '17:30' }
+const DEFAULT_WORKING_DAYS = {
+  monday: true,
+  tuesday: true,
+  wednesday: true,
+  thursday: true,
+  friday: true,
+  saturday: false,
+  sunday: false
+}
+
+const createDaySchedule = (working = true) => ({
+  working,
+  ...DEFAULT_WORK_HOURS,
+  breaks: []
+})
+
+const createWeekSchedule = () => 
+  Object.keys(DEFAULT_WORKING_DAYS).reduce((acc, day) => ({
+    ...acc,
+    [day]: createDaySchedule(DEFAULT_WORKING_DAYS[day])
+  }), {})
 
 function App() {
   const [startDate, setStartDate] = useState('')
@@ -17,51 +41,20 @@ function App() {
   const [scheduleMode, setScheduleMode] = useState('simple') // 'simple' or 'advanced'
   const [scheduleSetup, setScheduleSetup] = useState({
     simple: {
-      startTime: '09:30',
-      endTime: '17:30',
+      ...DEFAULT_WORK_HOURS,
       breaks: [],
       preciseBreaks: true,
-      workingDays: {
-        monday: true,
-        tuesday: true,
-        wednesday: true,
-        thursday: true,
-        friday: true,
-        saturday: false,
-        sunday: false
-      }
+      workingDays: DEFAULT_WORKING_DAYS
     },
     advanced: {
-      preciseBreaks: true, // Advanced mode defaults to precise breaks
-      monday: { working: true, startTime: '09:30', endTime: '17:30', breaks: [] },
-      tuesday: { working: true, startTime: '09:30', endTime: '17:30', breaks: [] },
-      wednesday: { working: true, startTime: '09:30', endTime: '17:30', breaks: [] },
-      thursday: { working: true, startTime: '09:30', endTime: '17:30', breaks: [] },
-      friday: { working: true, startTime: '09:30', endTime: '17:30', breaks: [] },
-      saturday: { working: false, startTime: '09:30', endTime: '17:30', breaks: [] },
-      sunday: { working: false, startTime: '09:30', endTime: '17:30', breaks: [] }
+      preciseBreaks: true,
+      ...createWeekSchedule()
     }
   })
-  const [workStartTime, setWorkStartTime] = useState('09:30')
-  const [workEndTime, setWorkEndTime] = useState('17:30')
-  const [workingDays, setWorkingDays] = useState({
-    monday: true,
-    tuesday: true,
-    wednesday: true,
-    thursday: true,
-    friday: true,
-    saturday: false,
-    sunday: false
-  })
-  const [customSchedule, setCustomSchedule] = useState({
-    monday: { working: true, startTime: '09:30', endTime: '17:30' },
-    tuesday: { working: true, startTime: '09:30', endTime: '17:30' },
-    wednesday: { working: true, startTime: '09:30', endTime: '17:30' },
-    thursday: { working: true, startTime: '09:30', endTime: '17:30' },
-    friday: { working: true, startTime: '09:30', endTime: '17:30' },
-    saturday: { working: false, startTime: '09:30', endTime: '17:30' },
-    sunday: { working: false, startTime: '09:30', endTime: '17:30' }
-  })
+  const [workStartTime, setWorkStartTime] = useState(DEFAULT_WORK_HOURS.startTime)
+  const [workEndTime, setWorkEndTime] = useState(DEFAULT_WORK_HOURS.endTime)
+  const [workingDays, setWorkingDays] = useState(DEFAULT_WORKING_DAYS)
+  const [customSchedule, setCustomSchedule] = useState(createWeekSchedule())
 
   const convertTimeToDecimal = (timeStr) => {
     if (!timeStr) return 0
@@ -159,7 +152,7 @@ function App() {
     }
   }
 
-  const calculatePayoffDateTime = (hoursToWorkOff) => {
+  const calculatePayoffDateTime = useCallback((hoursToWorkOff) => {
     if (hoursToWorkOff <= 0) return null
     
     const workStartInfo = getWorkStartInfo()
@@ -249,88 +242,130 @@ function App() {
     }
     
     return null
-  }
+  }, [endDate, endDateHours, workStartTime, workEndTime, workingDays, customSchedule, scheduleMode, skippedDays])
 
-  const decimalHours = convertTimeToDecimal(totalHours)
-  const rate = parseFloat(hourlyRate) || 0
-  const prepaid = parseFloat(prepaidAmount) || 0
-  const totalAmount = decimalHours * rate
-  const remaining = totalAmount - prepaid
-  const remainingHours = rate > 0 ? remaining / rate : 0
+  // Memoize expensive calculations
+  const calculations = useMemo(() => {
+    const decimalHours = convertTimeToDecimal(totalHours)
+    const rate = parseFloat(hourlyRate) || 0
+    const prepaid = parseFloat(prepaidAmount) || 0
+    const totalAmount = decimalHours * rate
+    const remaining = totalAmount - prepaid
+    const remainingHours = rate > 0 ? remaining / rate : 0
+    
+    return { decimalHours, rate, prepaid, totalAmount, remaining, remainingHours }
+  }, [totalHours, hourlyRate, prepaidAmount])
   
-  const dailyHours = calculateDailyWorkHours()
+  const dailyHours = useMemo(() => calculateDailyWorkHours(), [workStartTime, workEndTime])
   
   // Calculate payoff info for overpaid scenarios only
-  const payoffInfo = remaining < 0 && rate > 0 ? calculatePayoffDateTime(Math.abs(remainingHours)) : null
-  const workSchedule = scheduleMode === 'simple' 
-    ? Object.entries(workingDays)
-        .filter(([_, isWorking]) => isWorking)
-        .map(([day, _]) => day.charAt(0).toUpperCase() + day.slice(1, 3))
-        .join('-')
-    : Object.entries(customSchedule)
-        .filter(([_, dayInfo]) => dayInfo.working)
-        .map(([day, _]) => day.charAt(0).toUpperCase() + day.slice(1, 3))
-        .join('-')
+  const payoffInfo = useMemo(() => {
+    return calculations.remaining < 0 && calculations.rate > 0 
+      ? calculatePayoffDateTime(Math.abs(calculations.remainingHours)) 
+      : null
+  }, [calculations.remaining, calculations.rate, calculations.remainingHours, endDate, endDateHours, workStartTime, workEndTime, workingDays, customSchedule, scheduleMode, skippedDays])
+  const workSchedule = useMemo(() => {
+    return scheduleMode === 'simple' 
+      ? Object.entries(workingDays)
+          .filter(([_, isWorking]) => isWorking)
+          .map(([day, _]) => day.charAt(0).toUpperCase() + day.slice(1, 3))
+          .join('-')
+      : Object.entries(customSchedule)
+          .filter(([_, dayInfo]) => dayInfo.working)
+          .map(([day, _]) => day.charAt(0).toUpperCase() + day.slice(1, 3))
+          .join('-')
+  }, [scheduleMode, workingDays, customSchedule])
 
-  const holidayExclusionText = skippedDays.length > 0 && payoffInfo ? `
+  const holidayExclusionText = useMemo(() => {
+    return skippedDays.length > 0 && payoffInfo ? `
 ${skippedDays.length} day${skippedDays.length > 1 ? 's' : ''} excluded from timeline` : ''
+  }, [skippedDays.length, payoffInfo])
 
-  const summary = `Date range: ${formatDate(startDate)}${endDate ? ` – ${formatDate(endDate)}` : ''}
+  const summary = useMemo(() => {
+    return `Date range: ${formatDate(startDate)}${endDate ? ` – ${formatDate(endDate)}` : ''}
 Total time: ${formatTimeForDisplay(totalHours)}
-Amount: ${decimalHours.toFixed(1)} × $${rate.toFixed(2)} = $${totalAmount.toFixed(2)}${prepaid > 0 ? `
-Prepaid: $${prepaid.toFixed(2)}
-${remaining < 0 ? 'Extra hours needed' : 'Remaining to bill'}: $${remaining.toFixed(2)} (${remainingHours.toFixed(1)} hours)${payoffInfo ? `
+Amount: ${calculations.decimalHours.toFixed(1)} × $${calculations.rate.toFixed(2)} = $${calculations.totalAmount.toFixed(2)}${calculations.prepaid > 0 ? `
+Prepaid: $${calculations.prepaid.toFixed(2)}
+${calculations.remaining < 0 ? 'Extra hours needed' : 'Remaining to bill'}: $${calculations.remaining.toFixed(2)} (${calculations.remainingHours.toFixed(1)} hours)${payoffInfo ? `
 
 You'll be all caught up: ${payoffInfo.formattedDateTime}
 Based on your ${workSchedule}, ${workStartTime.replace(':', ':')} - ${workEndTime.replace(':', ':')} schedule (${dailyHours} hours/day)${holidayExclusionText}` : ''}` : ''}`
+  }, [startDate, endDate, totalHours, calculations, payoffInfo, workSchedule, workStartTime, workEndTime, dailyHours, holidayExclusionText])
 
-  const copyToClipboard = () => {
+  const copyToClipboard = useCallback(() => {
     navigator.clipboard.writeText(summary)
-  }
+  }, [summary])
 
   // Input validation helpers
-  const handleNumericInput = (value, setter, allowDecimal = true) => {
+  const handleNumericInput = useCallback((value, setter, allowDecimal = true) => {
     const regex = allowDecimal ? /^\d*\.?\d*$/ : /^\d*$/
     if (value === '' || regex.test(value)) {
       setter(value)
     }
-  }
+  }, [])
 
-  const handleTimeInput = (value, setter) => {
+  const handleTimeInput = useCallback((value, setter) => {
     // Allow time format (HH:MM:SS) or decimal hours
     const timeRegex = /^(\d{1,4}:)?(\d{1,2}:)?(\d{1,2})?$|^\d*\.?\d*$/
     if (value === '' || timeRegex.test(value)) {
       setter(value)
     }
-  }
+  }, [])
 
-  const addBreak = (mode, day = null) => {
-    const isPrecise = mode === 'simple' ? scheduleSetup.simple.preciseBreaks : scheduleSetup.advanced.preciseBreaks
-    const newBreak = isPrecise 
-      ? { name: 'Lunch', startTime: '12:00', endTime: '13:00', duration: 60 }
-      : { name: 'Lunch', duration: 60 }
-    
-    if (mode === 'simple') {
-      setScheduleSetup(prev => ({
-        ...prev,
-        simple: {
-          ...prev.simple,
-          breaks: [...prev.simple.breaks, newBreak]
+  // Unified break management
+  const updateBreaks = useCallback((mode, day, action, payload) => {
+    setScheduleSetup(prev => {
+      const newState = { ...prev }
+      
+      if (mode === 'simple') {
+        const breaks = [...newState.simple.breaks]
+        
+        switch (action) {
+          case 'add':
+            const isPrecise = newState.simple.preciseBreaks
+            const newBreak = isPrecise 
+              ? { name: 'Lunch', startTime: '12:00', endTime: '13:00', duration: 60 }
+              : { name: 'Lunch', duration: 60 }
+            breaks.push(newBreak)
+            break
+          case 'remove':
+            breaks.splice(payload, 1)
+            break
+          case 'update':
+            breaks[payload.index] = { ...breaks[payload.index], ...payload.changes }
+            break
         }
-      }))
-    } else if (day) {
-      setScheduleSetup(prev => ({
-        ...prev,
-        advanced: {
-          ...prev.advanced,
-          [day]: {
-            ...prev.advanced[day],
-            breaks: [...prev.advanced[day].breaks, newBreak]
-          }
+        
+        newState.simple.breaks = breaks
+      } else if (day) {
+        const breaks = [...newState.advanced[day].breaks]
+        
+        switch (action) {
+          case 'add':
+            const isPrecise = newState.advanced.preciseBreaks
+            const newBreak = isPrecise 
+              ? { name: 'Lunch', startTime: '12:00', endTime: '13:00', duration: 60 }
+              : { name: 'Lunch', duration: 60 }
+            breaks.push(newBreak)
+            break
+          case 'remove':
+            breaks.splice(payload, 1)
+            break
+          case 'update':
+            breaks[payload.index] = { ...breaks[payload.index], ...payload.changes }
+            break
         }
-      }))
-    }
-  }
+        
+        newState.advanced[day].breaks = breaks
+      }
+      
+      return newState
+    })
+  }, [])
+
+  const addBreak = useCallback((mode, day = null) => {
+    updateBreaks(mode, day, 'add')
+  }, [updateBreaks])
 
   const calculateBreakDuration = (startTime, endTime) => {
     if (!startTime || !endTime) return 0
@@ -339,28 +374,9 @@ Based on your ${workSchedule}, ${workStartTime.replace(':', ':')} - ${workEndTim
     return (end - start) / (1000 * 60) // convert to minutes
   }
 
-  const removeBreak = (mode, index, day = null) => {
-    if (mode === 'simple') {
-      setScheduleSetup(prev => ({
-        ...prev,
-        simple: {
-          ...prev.simple,
-          breaks: prev.simple.breaks.filter((_, i) => i !== index)
-        }
-      }))
-    } else if (day) {
-      setScheduleSetup(prev => ({
-        ...prev,
-        advanced: {
-          ...prev.advanced,
-          [day]: {
-            ...prev.advanced[day],
-            breaks: prev.advanced[day].breaks.filter((_, i) => i !== index)
-          }
-        }
-      }))
-    }
-  }
+  const removeBreak = useCallback((mode, index, day = null) => {
+    updateBreaks(mode, day, 'remove', index)
+  }, [updateBreaks])
 
   const confirmSchedule = () => {
     // Update the working state with the configured schedule
@@ -392,7 +408,7 @@ Based on your ${workSchedule}, ${workStartTime.replace(':', ':')} - ${workEndTim
     setIsEditingSchedule(false)
   }
 
-  const generateDateRange = () => {
+  const generateDateRange = useCallback(() => {
     if (!endDate) return []
     
     const startFrom = new Date(endDate)
@@ -430,7 +446,7 @@ Based on your ${workSchedule}, ${workStartTime.replace(':', ':')} - ${workEndTim
     }
     
     return dates
-  }
+  }, [endDate, workingDays, customSchedule, scheduleMode, skippedDays, dayNotes])
 
   const toggleDayOff = (dateStr) => {
     setSkippedDays(prev => {
@@ -1032,7 +1048,7 @@ Based on your ${workSchedule}, ${workStartTime.replace(':', ':')} - ${workEndTim
             />
           </div>
 
-          {prepaidAmount && parseFloat(prepaidAmount) > 0 && !showScheduleModal && (
+          {calculations.prepaid > 0 && !showScheduleModal && (
             <>
               <div className="form-group">
                 <label>🏖️ Upcoming holidays or time off?</label>
@@ -1068,7 +1084,7 @@ Based on your ${workSchedule}, ${workStartTime.replace(':', ':')} - ${workEndTim
             </>
           )}
 
-          {prepaidAmount && parseFloat(prepaidAmount) > 0 && !showScheduleModal && (
+          {calculations.prepaid > 0 && !showScheduleModal && (
             <div className="schedule-info">
               <div className="info-card">
                 <h4>Using Your Configured Schedule</h4>
