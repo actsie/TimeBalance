@@ -504,6 +504,8 @@ main.has-summary {
   background: white;
   color: var(--gray-900);
   box-sizing: border-box;
+  height: 2.5rem;
+  line-height: 1.4;
 }
 
 .break-item-precise input[type="time"] {
