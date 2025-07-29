@@ -468,7 +468,7 @@ main.has-summary {
 
 .break-header {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr 0.6fr auto;
+  grid-template-columns: 0.8fr 0.8fr 0.8fr 0.6fr auto;
   gap: 0.3rem;
   padding: 0.5rem;
   background: rgba(102, 126, 234, 0.1);
@@ -481,7 +481,7 @@ main.has-summary {
 
 .break-item-precise {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr 0.6fr auto;
+  grid-template-columns: 0.8fr 0.8fr 0.8fr 0.6fr auto;
   gap: 0.3rem;
   margin-bottom: 0.5rem;
   align-items: center;
