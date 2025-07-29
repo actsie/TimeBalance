@@ -854,6 +854,7 @@ main.has-summary {
   background: white;
   color: var(--gray-900);
   position: relative;
+  z-index: 1;
 }
 
 .form-group input[type="date"]::-webkit-calendar-picker-indicator {
@@ -864,14 +865,16 @@ main.has-summary {
 }
 
 .form-group input:hover {
-  border-color: var(--gray-400);
-  background: white;
+  border: 2px solid transparent;
+  background: linear-gradient(white, white) padding-box, 
+              linear-gradient(135deg, var(--primary-600), var(--primary-500)) border-box;
 }
 
 .form-group input:focus {
   outline: none;
-  border-color: var(--primary-600);
-  background: white;
+  border: 2px solid transparent;
+  background: linear-gradient(white, white) padding-box, 
+              linear-gradient(135deg, var(--primary-600), var(--primary-500)) border-box;
   box-shadow: 0 0 0 3px var(--primary-100);
   transform: translateY(-1px);
 }
