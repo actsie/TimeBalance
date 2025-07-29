@@ -683,7 +683,6 @@ Based on your ${workSchedule}, ${workStartTime.replace(':', ':')} - ${workEndTim
               </div>
             ) : (
               <div className="schedule-config">
-                <h3>Advanced Mode</h3>
                 <p className="mode-description">Set different hours for each day</p>
                 
                 <div className="break-timing-toggle">
