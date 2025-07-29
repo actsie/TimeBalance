@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls:*)",
+      "Bash(./launch-app.sh:*)",
+      "Bash(chmod:*)",
+      "Bash(./create-app.sh:*)",
+      "Bash(pkill:*)",
+      "Bash(npm run start:*)",
+      "Bash(cp:*)",
+      "Bash(./create-icon.sh:*)",
+      "Bash(curl:*)",
+      "Bash(npm run dev:*)",
+      "Bash(rm:*)",
+      "Bash(NODE_ENV=development electron .)",
+      "Bash(NODE_ENV=development npx electron .)",
+      "WebFetch(domain:localhost)",
+      "Bash(npm install:*)",
+      "Bash(npm run build:*)",
+      "Bash(vercel:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
+    ],
+    "deny": []
+  }
+}
